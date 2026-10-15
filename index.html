@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fiyat Yönetimi · Prototip</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#fff; --ink:#1b1f24; --sub:#5a6270; --line:#e3e6ec; --accent:#1d39c4; --soft:#eef1fc;
+    --ok:#0e9f6e; --ok-bg:#e6f6ef; --warn:#a85f0a; --warn-bg:#fdf1de; --bad:#d64545; --bad-bg:#fdeaea;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#101216; --card:#181b21; --ink:#eef0f3; --sub:#a1a8b4; --line:#2a2f38; --accent:#7f98ff; --soft:#1f2640;
+    --ok:#3ccf98; --ok-bg:#12281f; --warn:#f0a94d; --warn-bg:#32250f; --bad:#ff7a7a; --bad-bg:#341919; } }
+  :root[data-theme="dark"]{
+    --bg:#101216; --card:#181b21; --ink:#eef0f3; --sub:#a1a8b4; --line:#2a2f38; --accent:#7f98ff; --soft:#1f2640;
+    --ok:#3ccf98; --ok-bg:#12281f; --warn:#f0a94d; --warn-bg:#32250f; --bad:#ff7a7a; --bad-bg:#341919;
+  }
+  *{box-sizing:border-box;} [hidden]{display:none !important;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; font-size:14.5px;}
+  .wrap{max-width:1240px; margin:0 auto; padding:20px 16px 48px;}
+  .eyebrow{font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--accent);}
+  h1{margin:2px 0 14px; font-size:25px;}
+  .bar{display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .tabs{display:flex; gap:6px;}
+  .tab{font:inherit; font-weight:600; padding:10px 18px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--sub); cursor:pointer;}
+  .tab.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .goal label,.fl label{display:block; font-size:12.5px; color:var(--sub); margin-bottom:4px;}
+  input,select{font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink);}
+  .goal input{width:110px;}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:14px;}
+  .filters{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;}
+  .fl.grow{flex:1; min-width:180px;} .fl.grow input{width:100%;}
+  .chk{display:flex; align-items:center; gap:6px; font-size:13.5px; padding-bottom:8px;}
+  .tbl{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow-x:auto; margin-bottom:14px;}
+  table{width:100%; border-collapse:collapse; min-width:900px;}
+  th,td{padding:10px 11px; border-bottom:1px solid var(--line); text-align:right; vertical-align:middle;}
+  th{font-size:12.5px; color:var(--sub); font-weight:600; background:var(--bg);}
+  th:first-child,td:first-child,.st,th.st{text-align:left;}
+  tr:last-child td{border-bottom:none;}
+  #v2 table{min-width:1140px;}
+  small{display:block; color:var(--sub); font-size:12px;}
+  small.w,.fix.w{color:var(--warn);} small.g{color:var(--ok);}
+  td input[type=number]{width:92px; text-align:right; border:1.5px solid var(--accent); background:var(--soft);}
+  td input.qi{width:146px;}
+  .pos{color:var(--ok);} .neg{color:var(--bad);}
+  .badge{display:inline-block; font-size:12.5px; font-weight:700; border-radius:20px; padding:3px 10px;}
+  .badge.ok{background:var(--ok-bg); color:var(--ok);} .badge.bad{background:var(--bad-bg); color:var(--bad);}
+  .fix{display:block; font-size:12.5px; color:var(--sub); margin-top:3px;}
+  .fix button,.ap{background:none; border:none; color:var(--accent); font:inherit; font-weight:700; cursor:pointer; padding:0; text-decoration:underline;}
+  button.upd,button.main,button.sec{font:inherit; font-weight:700; border-radius:8px; padding:8px 14px; cursor:pointer; border:1px solid var(--accent);}
+  button.upd,button.sec{background:var(--card); color:var(--accent);} button.main{background:var(--accent); color:#fff;}
+  button:disabled{opacity:.4; cursor:default;}
+  .rm{background:none; border:none; color:var(--sub); font-size:16px; cursor:pointer;}
+  .empty{text-align:center !important; color:var(--sub); padding:28px !important;}
+  .verdict{border-radius:14px; padding:14px 18px; margin-bottom:12px; border:1px solid;}
+  .verdict b{display:block; font-size:18px; margin-bottom:2px;} .verdict span{color:var(--ink);}
+  .verdict.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok);}
+  .verdict.hint{background:var(--soft); color:var(--accent); border-color:var(--accent);}
+  .badge:not(.ok):not(.bad){background:var(--bg); color:var(--sub);}
+  .verdict.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn);}
+  .sum{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px;}
+  @media (max-width:640px){ .sum{grid-template-columns:1fr;} }
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 16px;}
+  .kpi small{font-size:12.5px;} .kpi b{display:block; font-size:21px; margin:1px 0;}
+  .bulk{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+  .bulk input{width:70px;}
+  .scopeh{font-size:12.5px; letter-spacing:.7px; text-transform:uppercase; color:var(--sub); font-weight:600; margin-bottom:8px;}
+  .scope{display:flex; gap:24px; flex-wrap:wrap; margin-bottom:12px;}
+  .radio{display:flex; align-items:center; gap:7px; font-weight:600; cursor:pointer;}
+  input[type=radio],input[type=checkbox]{padding:0; width:auto; accent-color:var(--accent);}
+  .sug{margin-top:8px; border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .sug > div{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line);}
+  .sug > div:last-child{border-bottom:none;} .sug small{display:inline; margin-left:6px;}
+  .hint2{font-size:12.5px; color:var(--sub); margin-top:10px;}
+  .tchips{display:flex; gap:10px; flex-wrap:wrap;}
+  .tc{display:flex; align-items:center; gap:8px; background:var(--soft); border:1px solid var(--line); border-radius:10px; padding:6px 10px; font-weight:600;}
+  .tc input{width:72px; text-align:right;}
+  #tpanel,.tbl{scroll-margin-top:12px;}
+  .info48{font-size:13px; color:var(--sub); background:var(--soft); border-radius:10px; padding:8px 12px; margin-bottom:12px;}
+  .cal{flex:1 0 100%; border-top:1px dashed var(--line); padding-top:12px; margin-top:4px;}
+  .calr{display:grid; grid-template-columns:200px 120px 1fr; gap:10px; align-items:center; padding:5px 0; font-size:13.5px;}
+  .calr .sub{color:var(--sub);}
+  @media (max-width:760px){ .calr{grid-template-columns:1fr; gap:2px; padding:8px 0;} }
+  .foot{font-size:12.5px; color:var(--sub); border-left:3px solid var(--accent); padding-left:12px; margin-top:6px;}
+  details{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 16px; font-size:13.5px; color:var(--sub); margin-top:14px;}
+  summary{cursor:pointer; color:var(--ink); font-weight:600;} details p{margin:8px 0 0; line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Akıllı Fiyat ve Kampanya Paneli · Prototip</div>
+  <h1>Fiyat Yönetimi</h1>
+  <div class="bar">
+    <div class="tabs"><button class="tab on" data-v="v1">Ürünler</button><button class="tab" data-v="v2">Kampanya Oluştur</button></div>
+    
+  </div>
+
+  <section id="v1">
+    <div class="info48">Fiyat güncellemeleri online kanalda anında, mağaza etiketlerinde 48 saat içinde yansır.</div>
+    <div class="panel filters">
+      <div class="fl grow"><label for="pq">Ürün ara</label><input type="search" id="pq" placeholder="Ürün adı"></div>
+      <div class="fl"><label for="pc">Kategori</label><select id="pc"></select></div>
+      <div class="fl"><label for="pb">Marka</label><select id="pb"></select></div>
+      <label class="chk"><input type="checkbox" id="pw"> Sadece hedefin altındakiler</label>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Ürün</th><th>Maliyet</th><th>Rakip fiyatı<br><span style="font-weight:400">en düşük – en yüksek</span></th><th>Stok</th><th>Güncel fiyat</th><th>Brüt kâr marjı (%)</th><th class="st">Durum</th><th></th></tr></thead>
+      <tbody id="pbody"></tbody>
+    </table></div>
+  </section>
+
+  <section id="v2" hidden>
+    <div class="panel filters">
+      <div class="fl grow"><label for="cn">Kampanya adı</label><input type="text" id="cn" placeholder="Kampanya adı"></div>
+      <div class="fl"><label for="d1">Başlangıç</label><input type="date" id="d1"></div>
+      <div class="fl"><label for="d2">Bitiş</label><input type="date" id="d2"></div>
+      <div class="cal" id="cal"></div>
+    </div>
+    <div class="panel">
+      <div class="scopeh">Kampanya kapsamı</div>
+      <div class="scope">
+        <label class="radio"><input type="radio" name="sc" value="bk" checked> Marka ve/veya kategori</label>
+        <label class="radio"><input type="radio" name="sc" value="up"> Belirli ürünler</label>
+      </div>
+      <div id="sbk" class="filters">
+        <div class="fl"><label for="cc">Kategori</label><select id="cc"></select></div>
+        <div class="fl"><label for="cb">Marka</label><select id="cb"></select></div>
+        <button class="main" id="list">Ürünleri listele</button><span id="hint" class="neg" hidden>Kategori ya da marka seç.</span>
+      </div>
+      <div id="sup" hidden>
+        <div class="fl grow"><label for="cq">Ürün ara</label><input type="search" id="cq" placeholder="Ürün adını yazmaya başla"></div>
+        <div id="sug" class="sug"></div>
+      </div>
+      <div class="hint2">Kategori ya da markayı değiştirdiğinde liste yenilenir. İstemediğin ürünleri ✕ ile kampanyadan hariç tutabilirsin.</div>
+    </div>
+    <div class="panel" id="tpanel" hidden>
+      <div class="scopeh">Hedef brüt kâr marjı (%) · kategori bazlı</div>
+      <div class="tchips" id="tchips"></div>
+      <div class="hint2">Kategori planından dolu gelir, istersen değiştirebilirsin.</div>
+    </div>
+    <div id="summary">
+      <div class="verdict" id="verdict"></div>
+      <div class="sum" id="sum"></div>
+      <div class="bulk" id="bulkbar">
+        <span>Hepsine</span><input type="number" id="bd" value="10"><span>% indirim</span><button class="sec" id="bulk">Uygula</button>
+        <button class="sec" id="fixall">Hedefin altındakilere minimum fiyatı uygula</button>
+        
+      </div>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Ürün</th><th>Maliyet</th><th>Güncel fiyat</th><th>Rakip fiyatı<br><span style="font-weight:400">en düşük – en yüksek</span></th><th>Kampanya fiyatı</th><th>Planlanan adet</th><th>Brüt kâr marjı (%)</th><th>Brüt kâr (₺)</th><th class="st">Durum</th><th></th></tr></thead>
+      <tbody id="cbody"></tbody>
+    </table></div>
+    <button class="main" id="save">Kampanyayı kaydet</button> <span id="saved" class="pos" hidden></span>
+  </section>
+
+  <div class="foot">Bu ekranlar hesaplar ve uyarır, fiyatı sen belirlersin. Hiçbir değer senin onayın olmadan değişmez. Tüm veriler örnektir.</div>
+  <details><summary>Nasıl hesaplanıyor?</summary>
+    <p><b>Brüt kâr marjı (%)</b> = (fiyat − maliyet) ÷ fiyat. <b>Brüt kâr (₺)</b> = (fiyat − maliyet) × adet. <b>Minimum fiyat</b> = hedef brüt kâr marjını tutturan en düşük fiyat. Hedef brüt kâr marjı kategori bazlıdır; kategori planından gelir ve değiştirilebilir. Mağaza etiketleri fiyat değişikliğini 48 saatte yansıtır; kampanya başlangıcı bu süreye göre kontrol edilir. Maliyet ERP'den gelir (KDV hariç), rakip fiyatı taranan sitelerdeki en düşük ve en yüksek fiyattır. Planlanan adedi sen girersin.</p></details>
+</div>
+<script>
+  const $ = id => document.getElementById(id);
+  const fmt = n => Math.round(n).toLocaleString('tr-TR'), TL = n => fmt(n) + ' ₺';
+  const pct = (n, d = 1) => '%' + (n * 100).toLocaleString('tr-TR', {maximumFractionDigits: d});
+  // id, ad, kategori, marka, maliyet, güncel fiyat, rakip min, rakip max, stok, geçen yıl satış
+  const P = [
+    [1,'Çizgili Defter 96 Yaprak','Kırtasiye','Notia',48,80,59,72,12400,4000],
+    [2,'Kareli Defter 80 Yaprak','Kırtasiye','Notia',42,70,55,68,8900,3000],
+    [3,'Kurşun Kalem Seti 12 Adet','Kırtasiye','Yazı',52,70,65,79,5200,3000],
+    [4,'Jel Kalem 10 Renk','Kırtasiye','Yazı',88,150,112,135,3100,2500],
+    [5,'Fosforlu Kalem 6 Renk','Kırtasiye','Yazı',60,80,85,99,420,600],
+    [6,'Okul Çantası Klasik','Kırtasiye','Okul Pro',310,590,520,640,640,350],
+    [7,'Pergel Seti','Kırtasiye','Okul Pro',36,49,49,62,0,400],
+    [8,'Silgi ve Kalemtraş Seti','Kırtasiye','Notia',14,29,22,31,15000,6000],
+    [9,'LGS Deneme Seti','Kitap','Bilge Yayın',205,270,265,310,2300,1500],
+    [10,'Resimli Hikâye Kitabı','Kitap','Mavi Kitap',70,120,89,109,4800,2000],
+    [11,'Klasik Roman Seti 5 Kitap','Kitap','Mavi Kitap',150,260,215,245,1150,700],
+    [12,'Yaz Tatili Çalışma Kitabı','Kitap','Bilge Yayın',55,95,72,88,6700,2500],
+    [13,'Klasik Rock Vinil Plak','Müzik','Plakçı',420,640,560,690,320,0],
+    [14,'Akustik Gitar Tel Seti','Müzik','Tınlı',95,170,140,185,1800,0],
+    [15,'Klasik Film Koleksiyonu Blu-ray','Film','Gösterim',210,330,285,360,540,0],
+    [16,'Aile Filmleri DVD Seti','Film','Gösterim',90,160,130,175,2100,0],
+    [17,'Strateji Masa Oyunu','Oyun','Oyun Atölyesi',340,480,450,590,760,0],
+    [18,'Konsol Oyunu Aksiyon','Oyun','Piksel',780,1050,990,1250,430,0],
+    [19,'Boyama Seti 24 Renk','Hobi','Renkli Atölye',110,190,160,205,3400,0],
+    [20,'Puzzle 1000 Parça','Hobi','Renkli Atölye',130,230,190,250,950,0],
+    [21,'Kablosuz Kulaklık','Teknoloji Aksesuarı','Sesli',420,590,590,740,1250,0],
+    [22,'Telefon Kılıfı Şeffaf','Teknoloji Aksesuarı','Sesli',35,85,60,95,7800,0],
+    [23,'Hızlı Şarj Kablosu 1 m','Teknoloji Aksesuarı','Voltix',45,110,89,125,5600,0],
+    [24,'Konser Bileti Kategori A','Etkinlik Bileti','Sahne Bilet',650,980,880,1050,280,0],
+    [25,'Tiyatro Bileti Orta Blok','Etkinlik Bileti','Sahne Bilet',210,360,320,390,420,0]
+  ].map(a => ({id:a[0], n:a[1], k:a[2], b:a[3], c:a[4], p:a[5], rmin:a[6], rmax:a[7], s:a[8], ly:a[9]}));
+  const TARGETS = {'Kitap':28,'Müzik':32,'Film':30,'Oyun':25,'Hobi':38,'Kırtasiye':30,'Teknoloji Aksesuarı':40,'Etkinlik Bileti':30};
+  const tgt = k => (TARGETS[k] || 0) / 100, minP = (c, k) => Math.ceil(c / (1 - tgt(k)));
+  const find = tr => P.find(x => x.id == tr.dataset.id);
+  const rk = (p, v) => { const n = v < p.rmin ? ['Rakibin en düşüğünün altında','w'] : v > p.rmax ? ['En yüksek rakipten pahalı','w'] : ['Rakip aralığında','g'];
+    return `${TL(p.rmin)} – ${TL(p.rmax)}<small class="${n[1]}">${n[0]}</small>`; };
+  const stk = p => p.s === 0 ? '<span class="badge bad">Tükendi</span>' : p.s < 500 ? `${fmt(p.s)}<small class="w">Düşük stok</small>` : fmt(p.s);
+  const state = (m, c, k) => m >= tgt(k) ? '<span class="badge ok">✓ Hedefte</span>' : `<span class="badge bad">Hedefin altında</span><span class="fix">En az ${TL(minP(c, k))} · <button class="ap" data-p="${minP(c, k)}">Uygula</button></span>`;
+  const CATS = ['Kitap','Müzik','Film','Oyun','Hobi','Kırtasiye','Teknoloji Aksesuarı','Etkinlik Bileti'];
+  function fillBrands(id, cat){ const b = [...new Set(P.filter(p => !cat || p.k === cat).map(p => p.b))];
+    $(id).innerHTML = '<option value="">Tüm markalar</option>' + b.map(x => `<option>${x}</option>`).join(''); }
+  $('pc').innerHTML = '<option value="">Tüm kategoriler</option>' + CATS.map(c => `<option>${c}</option>`).join('');
+  $('cc').innerHTML = '<option value="">Seçilmedi</option>' + CATS.map(c => `<option>${c}</option>`).join('');
+  fillBrands('pb', ''); fillBrands('cb', '');
+
+  /* ---- Ürünler ---- */
+  function listP(){
+    const q = $('pq').value.toLowerCase(), c = $('pc').value, b = $('pb').value, w = $('pw').checked;
+    const rows = P.filter(p => (!c || p.k === c) && (!b || p.b === b) && (!q || p.n.toLowerCase().includes(q)) && (!w || (p.p - p.c) / p.p < tgt(p.k)));
+    $('pbody').innerHTML = rows.map(p => `<tr data-id="${p.id}"><td>${p.n}<small>${p.b} · ${p.k}</small></td><td>${TL(p.c)}</td><td class="rk"></td><td>${stk(p)}</td>
+      <td><input type="number" value="${p.p}" min="0" aria-label="${p.n} güncel fiyat"></td><td class="m"></td><td class="st"></td><td><button class="upd">Güncelle</button><small class="sn"></small></td></tr>`).join('')
+      || '<tr><td colspan="8" class="empty">Bu filtreyle ürün yok.</td></tr>';
+    document.querySelectorAll('#pbody tr[data-id]').forEach(updP);
+  }
+  function updP(tr){
+    const p = find(tr), v = +tr.querySelector('input').value || 0, m = v > 0 ? (v - p.c) / v : 0;
+    tr.querySelector('.rk').innerHTML = rk(p, v);
+    const mc = tr.querySelector('.m'); mc.innerHTML = pct(m) + '<small>Hedef ' + pct(tgt(p.k), 0) + '</small>'; mc.className = 'm ' + (m >= tgt(p.k) ? 'pos' : 'neg');
+    tr.querySelector('.st').innerHTML = state(m, p.c, p.k);
+    tr.querySelector('.upd').disabled = v === p.p;
+  }
+  $('pbody').addEventListener('input', e => { const tr = e.target.closest('tr[data-id]'); if (tr) updP(tr); });
+  $('pbody').addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    const a = e.target.closest('.ap'); if (a){ tr.querySelector('input').value = a.dataset.p; updP(tr); }
+    const u = e.target.closest('.upd');
+    if (u){ find(tr).p = +tr.querySelector('input').value; updP(tr); u.textContent = '✓ Güncellendi'; tr.querySelector('.sn').textContent = 'Mağazada en geç ' + fDT(new Date(Date.now() + H48)); setTimeout(() => { u.textContent = 'Güncelle'; }, 1500); }
+  });
+  $('pc').addEventListener('input', () => fillBrands('pb', $('pc').value));
+  ['pq','pc','pb','pw'].forEach(id => $(id).addEventListener('input', listP));
+
+  /* ---- Kampanya ---- */
+  const C = {}, added = new Set(), scopeIds = new Set(), pickIds = new Set(); let listed = false, scopeListed = false;
+  const cd = p => C[p.id] || (C[p.id] = {price: null, qty: null});
+  function listC(){
+    const items = P.filter(p => added.has(p.id));
+    $('cbody').innerHTML = items.length === 0
+      ? `<tr><td colspan="10" class="empty">${listed ? 'Bu seçimle ürün bulunamadı.' : 'Kampanya kapsamını belirle; ürünler burada listelenir.'}</td></tr>`
+      : items.map(p => { const d = cd(p); return `<tr data-id="${p.id}"><td>${p.n}<small>${p.b} · Stok ${fmt(p.s)}</small></td><td>${TL(p.c)}</td><td>${TL(p.p)}</td><td class="rk"></td>
+        <td><input class="pi" type="number" value="${d.price ?? ''}" placeholder="Fiyat gir" min="0" aria-label="${p.n} kampanya fiyatı"><small class="dc"></small></td>
+        <td><input class="qi" type="number" value="${d.qty ?? ''}" placeholder="Planlanan adet" min="0" aria-label="${p.n} adet"></td>
+        <td class="m"></td><td class="g"></td><td class="st"></td><td><button class="rm" title="Kampanyadan hariç tut" aria-label="${p.n} kampanyadan hariç tut">✕</button></td></tr>`; }).join('');
+    updC(); renderT();
+  }
+  function updC(){
+    let profit = 0, rev = 0, low = 0, n = 0, c = 0, rows = 0, tw = 0;
+    document.querySelectorAll('#cbody tr[data-id]').forEach(tr => {
+      const p = find(tr), rawP = tr.querySelector('.pi').value, rawQ = tr.querySelector('.qi').value, d = cd(p);
+      d.price = rawP === '' ? null : (+rawP || 0); d.qty = rawQ === '' ? null : (+rawQ || 0); rows++;
+      const dc = tr.querySelector('.dc'), mc = tr.querySelector('.m'), g = tr.querySelector('td.g'), st = tr.querySelector('.st');
+      if (d.price === null){
+        tr.querySelector('.rk').innerHTML = `${TL(p.rmin)} – ${TL(p.rmax)}`;
+        dc.textContent = ''; mc.textContent = '—'; mc.className = 'm'; g.textContent = '—';
+        st.innerHTML = '<span class="badge">Fiyat gir</span>'; return;
+      }
+      const up = d.price - p.c, m = d.price > 0 ? up / d.price : 0; n++; if (m < tgt(p.k)) low++;
+      tr.querySelector('.rk').innerHTML = rk(p, d.price);
+      dc.textContent = d.price < p.p ? 'Fiyat −' + pct(1 - d.price / p.p, 0) : d.price > p.p ? 'Fiyat +' + pct(d.price / p.p - 1, 0) : 'Fiyat değişmedi';
+      mc.innerHTML = pct(m) + '<small>Hedef ' + pct(tgt(p.k), 0) + '</small>'; mc.className = 'm ' + (m >= tgt(p.k) ? 'pos' : 'neg');
+      if (d.qty === null) g.textContent = '—'; else { g.textContent = TL(up * d.qty); profit += up * d.qty; rev += d.price * d.qty; tw += tgt(p.k) * d.price * d.qty; c++; }
+      st.innerHTML = state(m, p.c, p.k) + (d.qty === null ? '<span class="fix w">Brüt kâr (₺) için planlanan adedi gir</span>' : d.qty > p.s ? `<span class="fix w">Adet stoktan fazla (stok ${fmt(p.s)})</span>` : '');
+    });
+    $('save').disabled = n === 0; $('saved').hidden = true;
+    const avg = rev > 0 ? profit / rev : 0, tAvg = rev > 0 ? tw / rev : 0, ok = avg >= tAvg, vd = $('verdict');
+    vd.hidden = rows === 0; $('sum').hidden = c === 0; $('bulkbar').hidden = rows === 0;
+    if (c === 0){
+      vd.className = 'verdict hint';
+      vd.innerHTML = n === 0 ? '<b>Kampanya fiyatlarını girmeye başla</b><span>Her ürün için fiyatı ve planlanan adedi yaz; brüt kâr marjı yanında hemen görünür.</span>'
+        : '<b>Planlanan adetleri gir</b><span>Kampanya toplamı, fiyat ve adet girildikçe hesaplanır. Ürün bazındaki brüt kâr marjı (%) şimdiden görünüyor.</span>';
+      return;
+    }
+    vd.className = 'verdict ' + (ok ? 'ok' : 'warn');
+    vd.innerHTML = ok ? `<b>Kampanya hedefte</b><span>${low ? low + ' ürün tek başına hedefin altında, ama kampanya toplamı hedefi tutturuyor.' : 'Hesaplanan tüm ürünler hedefin üzerinde.'}</span>`
+      : `<b>Kampanya hedefin altında</b><span>Ortalama brüt kâr marjı ${pct(avg)} (hedef ${pct(tAvg, 1)}). ${low} üründe brüt kâr marjı hedefin altında.</span>`;
+    $('sum').innerHTML = `<div class="kpi"><small>Ortalama brüt kâr marjı (%)</small><b>${pct(avg)}</b><small>Hedef ${pct(tAvg, 1)} (kategori hedeflerinin ağırlıklı ortalaması)</small></div>
+      <div class="kpi"><small>Toplam brüt kâr (₺)</small><b>${TL(profit)}</b><small>Ciro ${TL(rev)}</small></div>
+      <div class="kpi"><small>Dikkat gereken ürün</small><b>${low} / ${n}</b><small>${c < rows ? (rows - c) + ' ürün toplama dahil değil (fiyat ya da adet eksik)' : 'Hedefin altında'}</small></div>`;
+  }
+  $('cbody').addEventListener('input', updC);
+  $('cbody').addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    const a = e.target.closest('.ap'); if (a){ tr.querySelector('.pi').value = a.dataset.p; updC(); }
+    if (e.target.closest('.rm')){ const id = find(tr).id; scopeIds.delete(id); pickIds.delete(id); added.delete(id); listC(); sug(); }
+  });
+  function rebuildAdded(){ added.clear(); scopeIds.forEach(id => added.add(id)); pickIds.forEach(id => added.add(id)); }
+  function setMsg(t, cls){ const h = $('hint'); h.textContent = t; h.className = cls; h.hidden = !t; }
+  function listScope(manual){
+    const c = $('cc').value, b = $('cb').value;
+    if (!c && !b){
+      if (manual){ setMsg('Kategori ya da marka seç.', 'neg'); return; }
+      setMsg('', ''); scopeIds.clear(); rebuildAdded(); listC(); return;
+    }
+    listed = scopeListed = true;
+    scopeIds.clear(); P.filter(p => (!c || p.k === c) && (!b || p.b === b)).forEach(p => scopeIds.add(p.id));
+    setMsg(scopeIds.size ? `✓ ${scopeIds.size} ürün listelendi` : 'Bu seçimle ürün bulunamadı.', scopeIds.size ? 'pos' : 'neg');
+    rebuildAdded(); listC();
+    if (manual) ($('tpanel').hidden ? $('cbody').closest('.tbl') : $('tpanel')).scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+  $('cc').addEventListener('input', () => { fillBrands('cb', $('cc').value); if (scopeListed) listScope(false); else renderT(); });
+  $('cb').addEventListener('input', () => { if (scopeListed) listScope(false); });
+  $('list').addEventListener('click', () => listScope(true));
+  document.querySelectorAll('input[name=sc]').forEach(r => r.addEventListener('change', () => {
+    const v = document.querySelector('input[name=sc]:checked').value;
+    $('sbk').hidden = v !== 'bk'; $('sup').hidden = v !== 'up';
+  }));
+  function sug(){
+    const q = $('cq').value.trim().toLowerCase(), box = $('sug');
+    if (!q){ box.innerHTML = ''; return; }
+    const m = P.filter(p => p.n.toLowerCase().includes(q)).slice(0, 6);
+    box.innerHTML = m.length ? m.map(p => `<div><span>${p.n}<small>${p.b} · ${p.k}</small></span>${added.has(p.id) ? '<span class="pos">✓ Eklendi</span>' : `<button class="sec add" data-id="${p.id}">+ Ekle</button>`}</div>`).join('') : '<div>Bu adla ürün bulunamadı.</div>';
+  }
+  $('cq').addEventListener('input', sug);
+  $('sug').addEventListener('click', e => { const b = e.target.closest('.add'); if (!b) return; pickIds.add(+b.dataset.id); added.add(+b.dataset.id); listed = true; listC(); sug(); });
+  $('bulk').addEventListener('click', () => { const k = +$('bd').value || 0;
+    document.querySelectorAll('#cbody tr[data-id]').forEach(tr => { tr.querySelector('.pi').value = Math.round(find(tr).p * (1 - k / 100)); }); updC(); });
+  $('fixall').addEventListener('click', () => {
+    document.querySelectorAll('#cbody tr[data-id]').forEach(tr => { const i = tr.querySelector('.pi'); if (i.value !== '') i.value = Math.max(+i.value, minP(find(tr).c, find(tr).k)); }); updC(); });
+  $('save').addEventListener('click', () => {
+    const sv = $('saved'), name = $('cn').value.trim(), a = $('d1').value, b = $('d2').value;
+    sv.hidden = false;
+    if (!name || !a || !b || b < a){ sv.className = 'neg'; sv.textContent = !name ? 'Kampanya adını yaz.' : 'Tarih aralığını kontrol et.'; return; }
+    const i = storeInfo();
+    sv.className = 'pos'; sv.textContent = `✓ "${name}" kaydedildi · ${document.querySelectorAll('#cbody tr[data-id]').length} ürün · ` + (i.ok ? `online ve mağazada ${fD(i.start)}'te başlar` : `online ${fD(i.start)}, mağazada en erken ${fD(i.storeStart)}'te başlar`);
+  });
+
+  function renderT(){
+    const cats = [...new Set(P.filter(p => added.has(p.id)).map(p => p.k).concat($('cc').value ? [$('cc').value] : []))];
+    $('tpanel').hidden = cats.length === 0;
+    $('tchips').innerHTML = cats.map(k => `<label class="tc">${k}<input type="number" data-k="${k}" value="${TARGETS[k]}" min="0" max="95"> %</label>`).join('');
+  }
+  $('tchips').addEventListener('input', e => {
+    const i = e.target.closest('input[data-k]'); if (!i) return;
+    TARGETS[i.dataset.k] = +i.value || 0; updC(); document.querySelectorAll('#pbody tr[data-id]').forEach(updP);
+  });
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+    ['v1','v2'].forEach(id => { $(id).hidden = id !== b.dataset.v; });
+  }));
+  /* ---- Yayın takvimi: mağaza etiketleri 48 saat ---- */
+  const H48 = 48 * 36e5;
+  const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const fD = d => d.toLocaleDateString('tr-TR', {day: 'numeric', month: 'long'});
+  const fDT = d => d.toLocaleString('tr-TR', {day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'});
+  function earliestStart(){ const t = new Date(Date.now() + H48); if (t.getHours() || t.getMinutes() || t.getSeconds() || t.getMilliseconds()){ t.setDate(t.getDate() + 1); t.setHours(0, 0, 0, 0); } return t; }
+  function storeInfo(){
+    const a = $('d1').value, b = $('d2').value; if (!a || !b) return null;
+    const start = new Date(a + 'T00:00:00'), end = new Date(b + 'T00:00:00'), earliest = earliestStart(), ok = start >= earliest;
+    return {start, end, earliest, ok, storeStart: ok ? start : earliest};
+  }
+  function renderCal(){
+    const i = storeInfo(), el = $('cal'); $('saved').hidden = true;
+    if (!i){ el.innerHTML = '<div class="hint2">Başlangıç ve bitiş tarihini seç; mağaza etiketleri için gereken süre burada görünür (fiyat değişikliği mağazaya 48 saatte yansır).</div>'; return; }
+    const store = i.ok ? `<span class="pos">✓ Yetişir · fiyat kaydı için son zaman ${fDT(new Date(i.start - H48))}</span>`
+      : `<span><span class="neg">⚠ Süre yetmiyor · mağazada en erken ${fD(i.earliest)} başlar.</span> <button class="ap" id="shift">Başlangıcı ${fD(i.earliest)} yap</button></span>`;
+    el.innerHTML = `<div class="scopeh">Yayın takvimi</div>
+      <div class="calr"><span>Online (e-ticaret)</span><b>${fD(i.start)}</b><span class="pos">✓ Anında yansır</span></div>
+      <div class="calr"><span>Mağaza etiketleri</span><b>${fD(i.storeStart)}</b>${store}</div>
+      <div class="calr"><span>Bitiş ve eski fiyata dönüş</span><b>${fD(i.end)}</b><span class="sub">Eski fiyat da mağazaya 48 saatte yansır; dönüş bu kayıtla birlikte planlanır.</span></div>
+      <div class="hint2">Mağaza etiketleri fiyat değişikliğini 48 saatte yansıtır. Kampanya gün başında (00:00) başlar kabul edilir.</div>`;
+  }
+  $('cal').addEventListener('click', e => {
+    if (e.target.id !== 'shift') return;
+    const i = storeInfo(), len = Math.max(0, Math.round((i.end - i.start) / 864e5)), ne = new Date(i.earliest); ne.setDate(ne.getDate() + len);
+    $('d1').value = ymd(i.earliest); $('d2').value = ymd(ne); renderCal();
+  });
+  ['d1', 'd2'].forEach(id => $(id).addEventListener('input', renderCal));
+  renderCal();
+  listP(); listC();
+</script>
+</body>
+</html>
